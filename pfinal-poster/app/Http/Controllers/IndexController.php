@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Posters;
+use App\Services\ImgTools;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class IndexController extends Controller
 {
@@ -67,26 +69,72 @@ class IndexController extends Controller
             // 开始生成海报
             $this->generate_poster($result, $request);
         } catch (\Exception $exception) {
-
+            DB::rollBack();
         }
-
     }
 
     private function generate_poster($result, $request)
     {
+        // 获取 背景图片的 大小
+        $img = base64_decode(explode(',', $request->input('poster_str'))[1]);
+        $img_path = 'data/upload/tools_img/'.$result->id.'.jpg';
+        if (!file_exists(dirname($img_path))) {
+            mkdir(dirname($img_path), 0777, true);
+        }
+        file_put_contents($img_path, $img);
+        $img_info = getimagesize(asset($img_path)); // 获取图片的宽和高
+
+        //要生成的标题信息的宽度
+        // 如果宽大于高
+        $qrcode_width = 0;
+        $generate_desc = [];
+        switch ($request->input('poster_style')) {
+            case 0:
+                if ($img_info[0] >= $img_info[1]) {
+                    $generate_desc['height'] = round($img_info[0] / 3);
+                    $generate_desc['width'] = $img_info[0];
+                    $qrcode_width = round($generate_desc['height'] * 0.8);
+                } else {
+                    $generate_desc['width'] = round($img_info[1] / 3);
+                    $generate_desc['height'] = $img_info[0];
+                    $qrcode_width = round($generate_desc['width'] * 0.8);
+                }
+                break;
+            case 1:
+                $generate_desc['height'] = round($img_info[0] / 3);
+                $generate_desc['width'] = $img_info[0];
+                $qrcode_width = round($generate_desc['height'] * 0.8);
+                break;
+            case 2:
+                $generate_desc['width'] = round($img_info[1] / 3);
+                $generate_desc['height'] = $img_info[0];
+                $qrcode_width = round($generate_desc['width'] * 0.8);
+                break;
+        }
         // 生成二维码
         if ($request->input('inlineRadioOptions') == 1) {
             $file_path = 'data/upload/tools_qrcode/'.$result->id.'.png';
             if (!file_exists(dirname($file_path))) {
                 mkdir(dirname($file_path), 0777, true);
             }
-            QrCode::format('png')->size(200)->margin(1)->encoding('UTF-8')->generate(
+            QrCode::format('png')->size($qrcode_width)->margin(1)->encoding('UTF-8')->generate(
                 $request->input('poster_url'),
                 public_path($file_path)
             );
+            //dd($file_path);
             $result->qrcode_img = $file_path;
+            $result->save();
         } else {
-
+            // TODO 这个是上传的二维码
         }
+        //开始创建画布生成图片
+        $img_data = [
+            'bg_img' => ['bg_path' => asset($img_path), 'bg_data' => $img_info],
+            'generate_desc' => $generate_desc,
+            'qrcode' => ['qrcode_width' => $qrcode_width, 'qrcode_path' => asset($file_path)],
+            'msg' => ['title' => $result->title, 'subheading' => $result->subheading, 'desc' => $result->desc],
+        ];
+        $image = new ImgTools($img_data);
+        $image->createSharePng($img_path);
     }
 }
