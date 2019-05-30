@@ -5,9 +5,10 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="{{csrf_token()}}"/>
     <title>PFinal海报生成工具</title>
     <link rel="stylesheet" href="css/app.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="{{asset('css/style.css')}}">
     <script src="js/app.js"></script>
 </head>
 <body>
@@ -24,14 +25,14 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
+                <li class="nav-item {!! Request::getPathInfo()=='/'?'active':'' !!}">
                     <a class="nav-link" href="{{url('/')}}">首页<span class="sr-only">(current)</span></a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">查看海报</a>
+                <li class="nav-item {!! Request::getPathInfo()=='/poster_info'?'active':'' !!}">
+                    <a class="nav-link" href="{{url('poster_info')}}">查看海报</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">生成海报</a>
+                <li class="nav-item {!! Request::getPathInfo()=='/poster_generate'?'active':'' !!}">
+                    <a class="nav-link" href="{{url("poster_generate")}}">生成海报</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">关于我们</a>
@@ -40,7 +41,9 @@
         </div>
     </div>
 </nav>
-
+<div class="container">
+    @yield("content")
+</div>
 <footer class="footer">
     <div class="container text-center">
         <div>
@@ -53,5 +56,6 @@
         </div>
     </div>
 </footer>
+@yield("script")
 </body>
 </html>
