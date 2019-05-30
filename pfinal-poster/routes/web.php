@@ -14,3 +14,4 @@
 Route::get('/', 'IndexController@index');
 Route::get('poster_info/{poster_id?}','IndexController@poster_info');
 Route::get('poster_generate','IndexController@poster_generate');
+Route::post('poster_generate','IndexController@poster_generate_do');

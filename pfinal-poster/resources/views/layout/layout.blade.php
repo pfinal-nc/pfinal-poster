@@ -8,7 +8,7 @@
     <meta name="csrf-token" content="{{csrf_token()}}"/>
     <title>PFinal海报生成工具</title>
     <link rel="stylesheet" href="css/app.css">
-    <link rel="stylesheet" href="{{asset('css/style.css')}}">
+    <link rel="stylesheet" href="{{asset('css/style.css?version='.random_int(1,9999))}}">
     <script src="js/app.js"></script>
 </head>
 <body>

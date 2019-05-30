@@ -1,3 +1,7 @@
+.mt10 {
+    margin-top: 1rem;
+}
+
 .sticky-top {
     position: -webkit-sticky;
     position: sticky;
@@ -17,9 +21,11 @@
     padding-top: 50px;
     padding-bottom: 55px;
 }
+
 .padding {
     padding: 10px 5px;
 }
+
 .item {
     border: #c6c6c6 2px solid;
     width: 100%;
@@ -30,24 +36,31 @@
     box-shadow: rgba(0, 0, 0, 0.5) 0px 2px 2px;
     border-radius: 4px;
 }
+
 .item:hover {
     opacity: 0.5;
 }
+
 .item p {
 
 }
-.item.h150{
+
+.item.h150 {
     width: 100%;
     min-height: 150px;
 }
 
-.item.h200{
+.item.h200 {
     width: 100%;
     min-height: 200px;
 
 }
 
-.item.h250{
+.item.h250 {
     width: 100%;
     min-height: 200px;
+}
+
+#er_wei_code {
+    display: none;
 }
