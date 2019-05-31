@@ -48,26 +48,69 @@ class ImgTools
         //创建画布
         if ($this->imgData['generate_desc']['height'] > $this->imgData['generate_desc']['width']) {
             $canvas_height = $this->imgData['bg_img']['bg_data'][1];
-            $canvas_width = $this->imgData['bg_img']['bg_data'][0] + $this->imgData['generate_desc']['width'];
+            $canvas_width = $this->imgData['bg_img']['bg_data'][0] + $this->imgData['generate_desc']['width'] + 20;
         } else {
             $canvas_width = $this->imgData['bg_img']['bg_data'][0];
-            $canvas_height = $this->imgData['bg_img']['bg_data'][1] + $this->imgData['generate_desc']['height'];
+            $canvas_height = $this->imgData['bg_img']['bg_data'][1] + $this->imgData['generate_desc']['height'] + 20;
         }
-//        dd($canvas_height);
-//        dd($canvas_width);
         $im = imagecreatetruecolor($canvas_width, $canvas_height);
         $color = imagecolorallocate($im, 255, 255, 255);
         imagefill($im, 0, 0, $color);
-        $font_file = 'font/msyh.ttf';
+        $font_file = public_path('font/simkai.ttf');
         $font_color_2 = ImageColorAllocate($im, 28, 28, 28);
+        $font_color_3 = ImageColorAllocate($im, 255, 0, 0);
+
         $logoImg = @imagecreatefrompng($this->imgData['qrcode']['qrcode_path']);
-        imagecopyresized($im, $logoImg, $canvas_width - 10, $canvas_height-10, 0, 0, $this->imgData['qrcode']['qrcode_width'], $this->imgData['qrcode']['qrcode_width'],$this->imgData['qrcode']['qrcode_width'],$this->imgData['qrcode']['qrcode_width']);
+        imagecopyresized($im, $logoImg, $canvas_width - $this->imgData['qrcode']['qrcode_width']- ($this->imgData['qrcode']['qrcode_width'] * 0.1), $canvas_height-$this->imgData['qrcode']['qrcode_width']-($this->imgData['qrcode']['qrcode_width'] * 0.1), 0, 0, $this->imgData['qrcode']['qrcode_width'], $this->imgData['qrcode']['qrcode_width'],$this->imgData['qrcode']['qrcode_width'],$this->imgData['qrcode']['qrcode_width']);
+
         $posterImg = $this->createImageFromFile($this->imgData['bg_img']['bg_path']);
         imagecopyresized($im,$posterImg,0,0,0,0,$this->imgData['bg_img']['bg_data'][0],$this->imgData['bg_img']['bg_data'][1],$this->imgData['bg_img']['bg_data'][0],$this->imgData['bg_img']['bg_data'][1]);
 
+        // 划线
+        $hui = imagecolorallocate($im, 200, 200, 200);//创建一个颜色，以供使用
+        if($this->imgData['generate_desc']['height'] > $this->imgData['generate_desc']['width']) {
+            for ($i = 20; $i < $this->imgData['generate_desc']['height']; $i++) {
+                if ($i % 5 == 0) {
+                    imageline($im,  $canvas_width - $this->imgData['generate_desc']['width'] + 5, $i, $canvas_width - $this->imgData['generate_desc']['width'] + 5, $i+1, $hui);//划线
+                }
+            }
+
+        } else {
+            for ($i = 20; $i < $this->imgData['generate_desc']['width']; $i++) {
+                if ($i % 5 == 0) {
+                    imageline($im,  $i, $canvas_height - $this->imgData['generate_desc']['height'] + 10, $i+2, $canvas_height -$this->imgData['generate_desc']['height'] + 10, $hui);//划线
+                }
+            }
+
+        }
+
+
         // 标题
-        $theTitle = $this->cn_row_substr($this->imgData['msg']['title'], 2, 18);
-        imagettftext($im, 32, 0, 20, 1000, $font_color_2, $font_file, $this->to_entities($theTitle[1]));
+        $theTitle = $this->cn_row_substr($this->imgData['msg']['title'], 32,$canvas_height,$canvas_width);
+        //副标题
+        $theDesc = $this->cn_row_substr($this->imgData['msg']['subheading'], 2, 15);
+        //
+        $theSubheading = $this->cn_row_substr($this->imgData['msg']['desc'], 2, 15);
+        //dd($font_size<30?$font_size:32);
+        if($this->imgData['generate_desc']['height'] > $this->imgData['generate_desc']['width']) {
+            $font_size = ceil($this->imgData['generate_desc']['height'] / strlen($this->to_entities($theTitle[1])));
+            if($this->imgData['msg']['subheading'] || $this->imgData['msg']['desc'] ) {
+               $title_height =  $canvas_height - $this->imgData['qrcode']['qrcode_width']-70;
+            } else {
+                $title_height =  $canvas_height - $this->imgData['qrcode']['qrcode_width']-30;
+            }
+            $er_font_size = ceil($this->imgData['qrcode']['qrcode_width']/6);
+            imagettftext($im, ($font_size<30?$font_size:30), 0,$canvas_width - $this->imgData['qrcode']['qrcode_width'], $title_height, $font_color_2, $font_file, $this->to_entities($theTitle[1]));
+            imagettftext($im, ($er_font_size<30?$er_font_size:30), 0,$canvas_width - $this->imgData['qrcode']['qrcode_width'], $title_height-30, $font_color_2, $font_file, $this->to_entities($theDesc[1]));
+            imagettftext($im, ($er_font_size<30?$er_font_size:30), 0,$canvas_width - $this->imgData['qrcode']['qrcode_width'], $title_height-60, $font_color_3, $font_file, $this->to_entities($theSubheading[1]));
+
+        } else {
+            $font_size = ceil($this->imgData['generate_desc']['width'] / strlen($this->to_entities($theTitle[1])));
+            $er_font_size = ceil($this->imgData['qrcode']['qrcode_width']/12);
+            imagettftext($im, ($font_size<30?$font_size:32), 0,20, $canvas_height - $this->imgData['qrcode']['qrcode_width'] + 30, $font_color_2, $font_file, $this->to_entities($theTitle[1]));
+            imagettftext($im, ($er_font_size<30?$er_font_size:30), 0,20,$canvas_height - $this->imgData['qrcode']['qrcode_width'] + 60, $font_color_2, $font_file, $this->to_entities($theDesc[1]));
+            imagettftext($im, ($er_font_size<14?14:$er_font_size), 0,20,$canvas_height - $this->imgData['qrcode']['qrcode_width'] + 90, $font_color_3, $font_file, $this->to_entities($theSubheading[1]));
+        }
         if ($fileName) {
             imagepng($im, $fileName);
         } else {
@@ -111,16 +154,10 @@ class ImgTools
     {
         return file_get_contents($url);
     }
-    /**
-     * 分行连续截取字符串
-     * @param $str  需要截取的字符串,UTF-8
-     * @param int $row 截取的行数
-     * @param int $number 每行截取的字数，中文长度
-     * @param bool $suffix 最后行是否添加‘...’后缀
-     * @return array    返回数组共$row个元素，下标1到$row
-     */
-    private function cn_row_substr($str, $row = 1, $number = 10, $suffix = true)
+
+    function cn_row_substr($str, $row = 1, $number = 10, $suffix = true)
     {
+
         $result = array();
         for ($r = 1; $r <= $row; $r++) {
             $result[$r] = '';

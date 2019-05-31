@@ -264,7 +264,10 @@
                         },
                         success: function (res) {
                             if (res.code == 200) {
-
+                                layer.close(loading);
+                                setTimeout(function() {
+                                    window.location.href='{{url('poster_info')}}' + '/' + res.data.poser_id;
+                                },1000)
                             } else {
                                 layer.close(loading);
                                 layer.msg(res.msg, {icon: 2, time: 2000});

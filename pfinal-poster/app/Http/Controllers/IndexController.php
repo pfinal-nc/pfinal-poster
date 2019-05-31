@@ -20,15 +20,23 @@ class IndexController extends Controller
 
     public function index()
     {
-        return view('index');
+        $poster_list = $this->poster->get();
+
+        //dd($poster_list);
+        return view('index', compact('poster_list'));
     }
 
     public function poster_info(Request $request)
     {
-        $poster_id = $request->route('poster_id', 0);
 
-        //dd($poster_id);
-        return view('poster_info');
+        $poster_id = $request->route('poster_id', 0);
+        if ($poster_id) {
+            $poster = $this->poster->find($poster_id) ? $this->poster->find($poster_id) : $this->poster->first();
+        } else {
+            $poster = $this->poster->first();
+        }
+
+        return view('poster_info', compact('poster'));
     }
 
     public function poster_generate()
@@ -44,14 +52,14 @@ class IndexController extends Controller
             [
                 'poster_url' => 'required',
                 'title' => 'required',
-                'fv_title' => 'required',
+                'subheading' => 'required',
                 'desc' => 'required',
                 'poster_str' => 'required',
             ],
             [
                 'poster_url.required' => '海报连接必须',
                 'title.required' => '海报标题必须',
-                'fv_title.required' => '副标题必须',
+                'subheading.required' => '副标题必须',
                 'desc.required' => '描述必须',
                 'poster_str.required' => '海报图片必须',
             ]
@@ -60,16 +68,27 @@ class IndexController extends Controller
             return response()->json(['code' => 405, 'msg' => $validator->messages()->first()]);
         }
         $params['title'] = $request->input('title');
-        $params['subheading'] = $request->input('fv_title');
+        $params['subheading'] = $request->input('subheading');
         $params['desc'] = $request->input('desc');
         $params['poster_bg_str'] = $request->input('desc');
         DB::beginTransaction();
         try {
             $result = $this->poster->create($params);
             // 开始生成海报
-            $this->generate_poster($result, $request);
+            $res = $this->generate_poster($result, $request);
+            if ($res) {
+                DB::commit();
+
+                return response()->json(['code' => 200, 'data' => ['poser_id' => $result->id]]);
+            } else {
+                DB::rollBack();
+
+                return response()->json(['code' => 405, 'msg' => '生成错误']);
+            }
         } catch (\Exception $exception) {
             DB::rollBack();
+
+            return response()->json(['code' => 405, 'msg' => '生成错误']);
         }
     }
 
@@ -123,7 +142,7 @@ class IndexController extends Controller
             );
             //dd($file_path);
             $result->qrcode_img = $file_path;
-            $result->save();
+
         } else {
             // TODO 这个是上传的二维码
         }
@@ -135,6 +154,13 @@ class IndexController extends Controller
             'msg' => ['title' => $result->title, 'subheading' => $result->subheading, 'desc' => $result->desc],
         ];
         $image = new ImgTools($img_data);
-        $image->createSharePng($img_path);
+        $create_img_path = 'data/upload/tools_img/poster_'.$result->id.'.jpg';
+        if (!file_exists(dirname($create_img_path))) {
+            mkdir(dirname($create_img_path), 0777, true);
+        }
+        $image->createSharePng($create_img_path);
+        $result->poster_image = $create_img_path;
+
+        return $result->save();
     }
 }
